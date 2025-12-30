@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEET Smart Planner – Timetable Graph</title>
+  <title>NEET Smart Planner – Subject Graph</title>
   <style>
     body { font-family: system-ui, Arial, sans-serif; background: #f2f3f5; margin: 0; }
     body.dark { background: #121212; color: #e0e0e0; }
@@ -22,13 +22,12 @@
     body.dark .slot { border-color: #444; }
     .slot.completed span { text-decoration: line-through; color: #27ae60; }
 
-    /* Graph */
-    .bar-wrap { margin: 10px 0; }
+    /* Subject Graph */
+    .bar-wrap { margin: 12px 0; }
     .bar-label { font-weight: bold; margin-bottom: 4px; }
     .bar-bg { background: #ddd; border-radius: 10px; height: 16px; }
-    .bar-fill { height: 16px; border-radius: 10px; background: #2ecc71; width: 0%; transition: 0.4s; }
-
-    .stats { display: flex; justify-content: space-around; font-weight: bold; }
+    .bar-fill { height: 16px; border-radius: 10px; background: #3498db; width: 0%; transition: 0.4s; }
+    body.dark .bar-fill { background: #9b59b6; }
 
     .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; background: #fff; padding: 10px 0; border-top: 1px solid #ddd; }
     body.dark .bottom-nav { background: #1e1e1e; border-color: #444; }
@@ -36,7 +35,7 @@
   </style>
 </head>
 <body>
-<header>📊 NEET Daily Progress Graph</header>
+<header>📊 Subject-wise Timetable Graph</header>
 
 <div class="container">
 
@@ -65,19 +64,8 @@
   </div>
 
   <div class="card">
-    <h3>Daily Completion Graph</h3>
-    <div class="bar-wrap">
-      <div class="bar-label">Completed Slots</div>
-      <div class="bar-bg"><div id="progressBar" class="bar-fill"></div></div>
-      <p id="percent"></p>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="stats">
-      <div id="done">0 done</div>
-      <div id="total">0 total</div>
-    </div>
+    <h3>Subject-wise Completion</h3>
+    <div id="subjectGraph"></div>
   </div>
 
 </div>
@@ -102,10 +90,14 @@ function toggleDark() {
 function render() {
   const list = document.getElementById('slotList');
   list.innerHTML = '';
-  let doneCount = 0;
+
+  let subjects = {};
 
   slots.forEach((s, i) => {
-    if (s.completed) doneCount++;
+    if (!subjects[s.subject]) subjects[s.subject] = { total: 0, done: 0 };
+    subjects[s.subject].total++;
+    if (s.completed) subjects[s.subject].done++;
+
     const div = document.createElement('div');
     div.className = 'slot' + (s.completed ? ' completed' : '');
     div.innerHTML = `<span>${s.time} | [${s.subject}] ${s.task}</span>
@@ -113,14 +105,32 @@ function render() {
     list.appendChild(div);
   });
 
-  const percent = slots.length ? Math.round((doneCount / slots.length) * 100) : 0;
-  document.getElementById('progressBar').style.width = percent + '%';
-  document.getElementById('percent').innerText = percent + '% completed';
-
-  doneEl.innerText = `${doneCount} done`;
-  totalEl.innerText = `${slots.length} total`;
-
+  renderSubjectGraph(subjects);
   localStorage.setItem('neetSlots', JSON.stringify(slots));
+}
+
+function renderSubjectGraph(subjects) {
+  const graph = document.getElementById('subjectGraph');
+  graph.innerHTML = '';
+
+  for (let sub in subjects) {
+    const percent = Math.round((subjects[sub].done / subjects[sub].total) * 100);
+
+    const label = document.createElement('div');
+    label.className = 'bar-label';
+    label.innerText = `${sub} – ${percent}%`;
+
+    const bg = document.createElement('div');
+    bg.className = 'bar-bg';
+
+    const fill = document.createElement('div');
+    fill.className = 'bar-fill';
+    fill.style.width = percent + '%';
+
+    bg.appendChild(fill);
+    graph.appendChild(label);
+    graph.appendChild(bg);
+  }
 }
 
 function addSlot() {
@@ -137,9 +147,6 @@ setInterval(() => {
   const days = Math.floor((examDate - new Date()) / (1000*60*60*24));
   countdown.innerText = days > 0 ? `⏳ ${days} days left for NEET` : '🔥 Exam Day';
 }, 1000);
-
-const doneEl = document.getElementById('done');
-const totalEl = document.getElementById('total');
 
 render();
 </script>
