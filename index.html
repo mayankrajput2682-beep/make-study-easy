@@ -3,39 +3,69 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEET Smart Planner – Subject Graph</title>
+  <title>NEET Smart Planner</title>
+
   <style>
-    body { font-family: system-ui, Arial, sans-serif; background: #f2f3f5; margin: 0; }
-    body.dark { background: #121212; color: #e0e0e0; }
+    body { font-family: system-ui, Arial, sans-serif; background:#f2f3f5; margin:0; }
+    body.dark { background:#121212; color:#e0e0e0; }
 
-    header { position: sticky; top: 0; background: #2c3e50; color: #fff; padding: 14px; text-align: center; font-size: 18px; }
-    body.dark header { background: #000; }
+    header {
+      position: sticky; top:0;
+      background:#2c3e50; color:#fff;
+      padding:14px; text-align:center;
+      font-size:18px;
+    }
+    body.dark header { background:#000; }
 
-    .container { padding: 15px; max-width: 650px; margin: auto; }
-    .card { background: #fff; border-radius: 14px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
-    body.dark .card { background: #1e1e1e; }
+    .container { max-width:650px; margin:auto; padding:15px; }
 
-    input, select, button { width: 100%; padding: 12px; margin-top: 8px; font-size: 15px; border-radius: 10px; border: 1px solid #ccc; }
-    button { background: #3498db; color: #fff; border: none; }
+    .card {
+      background:#fff; padding:15px; margin-bottom:15px;
+      border-radius:14px;
+      box-shadow:0 4px 10px rgba(0,0,0,0.08);
+    }
+    body.dark .card { background:#1e1e1e; }
 
-    .slot { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
-    body.dark .slot { border-color: #444; }
-    .slot.completed span { text-decoration: line-through; color: #27ae60; }
+    input, select, button {
+      width:100%; padding:12px; margin-top:8px;
+      font-size:15px; border-radius:10px;
+      border:1px solid #ccc;
+    }
 
-    /* Subject Graph */
-    .bar-wrap { margin: 12px 0; }
-    .bar-label { font-weight: bold; margin-bottom: 4px; }
-    .bar-bg { background: #ddd; border-radius: 10px; height: 16px; }
-    .bar-fill { height: 16px; border-radius: 10px; background: #3498db; width: 0%; transition: 0.4s; }
-    body.dark .bar-fill { background: #9b59b6; }
+    button { background:#3498db; color:#fff; border:none; cursor:pointer; }
 
-    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; background: #fff; padding: 10px 0; border-top: 1px solid #ddd; }
-    body.dark .bottom-nav { background: #1e1e1e; border-color: #444; }
-    .bottom-nav button { width: auto; padding: 8px 12px; font-size: 14px; }
+    .slot {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:10px 0; border-bottom:1px solid #eee;
+    }
+    body.dark .slot { border-color:#444; }
+
+    .slot.completed span {
+      text-decoration: line-through;
+      color:#27ae60;
+    }
+
+    .actions { display:flex; gap:8px; align-items:center; }
+    .delete-btn { background:#e74c3c; padding:6px 10px; }
+
+    /* Graph */
+    .bar-label { font-weight:bold; margin-top:10px; }
+    .bar-bg { background:#ddd; border-radius:10px; height:16px; }
+    .bar-fill { height:16px; border-radius:10px; background:#3498db; width:0%; transition:0.4s; }
+    body.dark .bar-fill { background:#9b59b6; }
+
+    .bottom-nav {
+      position:fixed; bottom:0; left:0; right:0;
+      background:#fff; display:flex; justify-content:space-around;
+      padding:10px 0; border-top:1px solid #ddd;
+    }
+    body.dark .bottom-nav { background:#1e1e1e; border-color:#444; }
+    .bottom-nav button { width:auto; padding:8px 12px; }
   </style>
 </head>
 <body>
-<header>📊 Subject-wise Timetable Graph</header>
+
+<header>📚 NEET Smart Planner</header>
 
 <div class="container">
 
@@ -46,8 +76,8 @@
 
   <div class="card">
     <h3>Add Time Slot</h3>
-    <input id="time" placeholder="Time (6:00 – 7:30 AM)" />
-    <input id="task" placeholder="Task (Physics Revision)" />
+    <input id="time" placeholder="Time (6:00 – 7:30 AM)">
+    <input id="task" placeholder="Task (Physics Revision)">
     <select id="subject">
       <option>Physics</option>
       <option>Chemistry</option>
@@ -59,12 +89,12 @@
   </div>
 
   <div class="card">
-    <h3>Today's Schedule</h3>
+    <h3>Today's Tasks</h3>
     <div id="slotList"></div>
   </div>
 
   <div class="card">
-    <h3>Subject-wise Completion</h3>
+    <h3>Subject-wise Progress</h3>
     <div id="subjectGraph"></div>
   </div>
 
@@ -72,8 +102,8 @@
 
 <div class="bottom-nav">
   <button onclick="scrollTo(0,0)">🏠 Home</button>
-  <button onclick="alert('Timer coming next')">⏱ Timer</button>
-  <button onclick="alert('Tests coming next')">📝 Tests</button>
+  <button onclick="alert('Timer coming soon')">⏱ Timer</button>
+  <button onclick="alert('Tests coming soon')">📝 Tests</button>
 </div>
 
 <script>
@@ -87,6 +117,31 @@ function toggleDark() {
   localStorage.setItem('dark', document.body.classList.contains('dark'));
 }
 
+function addSlot() {
+  if (!time.value || !task.value) return;
+  slots.push({
+    time: time.value,
+    task: task.value,
+    subject: subject.value,
+    completed: false
+  });
+  time.value = '';
+  task.value = '';
+  render();
+}
+
+function toggle(i) {
+  slots[i].completed = !slots[i].completed;
+  render();
+}
+
+function removeSlot(i) {
+  if (confirm('Delete this task?')) {
+    slots.splice(i, 1);
+    render();
+  }
+}
+
 function render() {
   const list = document.getElementById('slotList');
   list.innerHTML = '';
@@ -94,22 +149,26 @@ function render() {
   let subjects = {};
 
   slots.forEach((s, i) => {
-    if (!subjects[s.subject]) subjects[s.subject] = { total: 0, done: 0 };
+    if (!subjects[s.subject]) subjects[s.subject] = { total:0, done:0 };
     subjects[s.subject].total++;
     if (s.completed) subjects[s.subject].done++;
 
     const div = document.createElement('div');
     div.className = 'slot' + (s.completed ? ' completed' : '');
-    div.innerHTML = `<span>${s.time} | [${s.subject}] ${s.task}</span>
-      <input type="checkbox" ${s.completed ? 'checked' : ''} onchange="toggle(${i})" />`;
+    div.innerHTML = `
+      <span>${s.time} | [${s.subject}] ${s.task}</span>
+      <div class="actions">
+        <input type="checkbox" ${s.completed ? 'checked' : ''} onchange="toggle(${i})">
+        <button class="delete-btn" onclick="removeSlot(${i})">❌</button>
+      </div>`;
     list.appendChild(div);
   });
 
-  renderSubjectGraph(subjects);
+  renderGraph(subjects);
   localStorage.setItem('neetSlots', JSON.stringify(slots));
 }
 
-function renderSubjectGraph(subjects) {
+function renderGraph(subjects) {
   const graph = document.getElementById('subjectGraph');
   graph.innerHTML = '';
 
@@ -132,15 +191,6 @@ function renderSubjectGraph(subjects) {
     graph.appendChild(bg);
   }
 }
-
-function addSlot() {
-  if (!time.value || !task.value) return;
-  slots.push({ time: time.value, task: task.value, subject: subject.value, completed: false });
-  time.value = ''; task.value = '';
-  render();
-}
-
-function toggle(i) { slots[i].completed = !slots[i].completed; render(); }
 
 const examDate = new Date('2026-05-03');
 setInterval(() => {
