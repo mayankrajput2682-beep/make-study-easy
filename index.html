@@ -3,45 +3,73 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEET Smart Planner Pro</title>
+  <title>NEET Smart Planner Pro – Mobile</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f6f8; padding: 20px; transition: 0.3s; }
+    body { font-family: system-ui, Arial, sans-serif; background: #f2f3f5; margin: 0; padding: 0; }
     body.dark { background: #121212; color: #e0e0e0; }
-    h1 { text-align: center; }
-    .container { max-width: 1000px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); transition: 0.3s; }
-    body.dark .container { background: #1e1e1e; }
-    .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
-    input, select, button { padding: 10px; font-size: 14px; }
-    button { cursor: pointer; }
-    ul { list-style: none; padding: 0; }
-    li { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #ccc; }
-    body.dark li { border-color: #444; }
-    li.completed span { text-decoration: line-through; color: #2ecc71; }
-    .stats { display: flex; justify-content: space-around; margin: 15px 0; font-weight: bold; flex-wrap: wrap; }
-    .timer, .countdown, .chart { text-align: center; margin-top: 25px; }
-    .toggle { text-align: right; }
 
-    /* Chart */
-    .bar-container { max-width: 500px; margin: auto; text-align: left; }
-    .bar-label { margin: 8px 0 3px; font-weight: bold; }
-    .bar { height: 20px; background: #3498db; border-radius: 5px; }
+    header {
+      position: sticky; top: 0; background: #2c3e50; color: #fff;
+      padding: 15px; text-align: center; font-size: 18px;
+    }
+
+    body.dark header { background: #000; }
+
+    .container { padding: 15px; max-width: 600px; margin: auto; }
+
+    .card {
+      background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 15px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+    }
+
+    body.dark .card { background: #1e1e1e; }
+
+    input, select, button {
+      width: 100%; padding: 12px; margin-top: 8px; font-size: 15px;
+      border-radius: 10px; border: 1px solid #ccc;
+    }
+
+    button { background: #3498db; color: #fff; border: none; }
+    button:active { transform: scale(0.98); }
+
+    .goal {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 0; border-bottom: 1px solid #eee;
+    }
+
+    body.dark .goal { border-color: #444; }
+
+    .goal.completed span { text-decoration: line-through; color: #27ae60; }
+
+    .stats { display: flex; justify-content: space-around; font-weight: bold; }
+
+    .bar { height: 14px; border-radius: 7px; background: #3498db; margin-bottom: 8px; }
     body.dark .bar { background: #9b59b6; }
+
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      display: flex; justify-content: space-around;
+      background: #fff; padding: 10px 0; border-top: 1px solid #ddd;
+    }
+
+    body.dark .bottom-nav { background: #1e1e1e; border-color: #444; }
+
+    .bottom-nav button { width: auto; padding: 8px 12px; font-size: 14px; }
   </style>
 </head>
 <body>
-<h1>NEET Smart Planner Pro</h1>
-<div class="toggle"><button onclick="toggleDark()">🌙 Toggle Dark Mode</button></div>
+<header>📘 NEET Smart Planner</header>
+
 <div class="container">
 
-  <!-- Countdown -->
-  <div class="countdown">
-    <h3>NEET Exam Countdown</h3>
+  <div class="card">
+    <button onclick="toggleDark()">🌙 Toggle Dark Mode</button>
     <p id="countdown"></p>
   </div>
 
-  <!-- Add Goal -->
-  <div class="row">
-    <input id="goalText" placeholder="Study goal (e.g. Electrochemistry)" />
+  <div class="card">
+    <h3>Add Study Goal</h3>
+    <input id="goalText" placeholder="Chapter / Topic" />
     <select id="subject">
       <option>Physics</option>
       <option>Chemistry</option>
@@ -51,34 +79,34 @@
     <button onclick="addGoal()">Add Goal</button>
   </div>
 
-  <ul id="goalList"></ul>
-
-  <!-- Stats -->
-  <div class="stats">
-    <div id="progress">Completed: 0/0</div>
-    <div id="time">Study Hours: 0</div>
+  <div class="card">
+    <h3>Today's Goals</h3>
+    <div id="goalList"></div>
   </div>
 
-  <!-- Subject-wise Chart -->
-  <div class="chart">
-    <h3>Subject-wise Study Hours</h3>
-    <div class="bar-container" id="chart"></div>
+  <div class="card">
+    <div class="stats">
+      <div id="progress">0/0</div>
+      <div id="time">0h</div>
+    </div>
   </div>
 
-  <!-- Study Timer -->
-  <div class="timer">
-    <h3>Study Timer (Pomodoro)</h3>
-    <input id="timerInput" type="number" placeholder="25" />
-    <button onclick="startTimer()">Start</button>
-    <p id="timerDisplay"></p>
+  <div class="card">
+    <h3>Subject-wise Hours</h3>
+    <div id="chart"></div>
   </div>
 
+</div>
+
+<div class="bottom-nav">
+  <button onclick="scrollTo(0,0)">🏠 Home</button>
+  <button onclick="alert('Timer coming next')">⏱ Timer</button>
+  <button onclick="alert('Tests coming next')">📝 Tests</button>
 </div>
 
 <script>
 let goals = JSON.parse(localStorage.getItem('neetGoals')) || [];
 let dark = JSON.parse(localStorage.getItem('dark')) || false;
-let timer;
 
 if (dark) document.body.classList.add('dark');
 
@@ -90,44 +118,40 @@ function toggleDark() {
 function render() {
   const list = document.getElementById('goalList');
   list.innerHTML = '';
-  let done = 0, totalHours = 0;
+  let done = 0, total = 0;
   let subjects = { Physics: 0, Chemistry: 0, Biology: 0 };
 
   goals.forEach((g, i) => {
     if (g.completed) {
-      done++;
-      totalHours += Number(g.hours);
+      done++; total += Number(g.hours);
       subjects[g.subject] += Number(g.hours);
     }
-    const li = document.createElement('li');
-    if (g.completed) li.classList.add('completed');
-    li.innerHTML = `<span>[${g.subject}] ${g.text} (${g.hours}h)</span>
+
+    const div = document.createElement('div');
+    div.className = 'goal' + (g.completed ? ' completed' : '');
+    div.innerHTML = `<span>[${g.subject}] ${g.text} (${g.hours}h)</span>
       <input type="checkbox" ${g.completed ? 'checked' : ''} onchange="toggle(${i})" />`;
-    list.appendChild(li);
+    list.appendChild(div);
   });
 
-  progress.innerText = `Completed: ${done}/${goals.length}`;
-  time.innerText = `Study Hours: ${totalHours}`;
-  localStorage.setItem('neetGoals', JSON.stringify(goals));
+  progress.innerText = `${done}/${goals.length} done`;
+  time.innerText = `${total}h`;
 
   renderChart(subjects);
+  localStorage.setItem('neetGoals', JSON.stringify(goals));
 }
 
 function renderChart(subjects) {
   const chart = document.getElementById('chart');
   chart.innerHTML = '';
   const max = Math.max(...Object.values(subjects), 1);
-
-  for (let sub in subjects) {
-    const label = document.createElement('div');
-    label.className = 'bar-label';
-    label.innerText = `${sub} – ${subjects[sub]}h`;
-
+  for (let s in subjects) {
+    const p = document.createElement('p');
+    p.innerText = `${s}: ${subjects[s]}h`;
     const bar = document.createElement('div');
     bar.className = 'bar';
-    bar.style.width = (subjects[sub] / max) * 100 + '%';
-
-    chart.appendChild(label);
+    bar.style.width = (subjects[s] / max) * 100 + '%';
+    chart.appendChild(p);
     chart.appendChild(bar);
   }
 }
@@ -141,24 +165,10 @@ function addGoal() {
 
 function toggle(i) { goals[i].completed = !goals[i].completed; render(); }
 
-function startTimer() {
-  clearInterval(timer);
-  let t = (timerInput.value || 25) * 60;
-  timer = setInterval(() => {
-    let m = Math.floor(t / 60);
-    let s = t % 60;
-    timerDisplay.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
-    if (t-- <= 0) clearInterval(timer);
-  }, 1000);
-}
-
-// Countdown
 const examDate = new Date('2026-05-03');
 setInterval(() => {
-  const now = new Date();
-  const diff = examDate - now;
-  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  countdown.innerText = days > 0 ? `${days} days left for NEET` : 'Exam Day!';
+  const days = Math.floor((examDate - new Date()) / (1000*60*60*24));
+  countdown.innerText = days > 0 ? `⏳ ${days} days left for NEET` : '🔥 Exam Day';
 }, 1000);
 
 render();
