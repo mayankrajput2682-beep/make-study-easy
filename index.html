@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NEET Daily Routine & Goal Tracker</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    .add-goal {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .add-goal input {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+    }
+    .add-goal button {
+      padding: 10px 15px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+    li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+    }
+    li.completed span {
+      text-decoration: line-through;
+      color: green;
+    }
+    .progress {
+      margin-top: 20px;
+      text-align: center;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>NEET Daily Routine & Goal Tracker</h1>
+  <div class="container">
+    <div class="add-goal">
+      <input type="text" id="goalInput" placeholder="Add your daily goal (e.g. Biology Revision)" />
+      <button onclick="addGoal()">Add</button>
+    </div>
+
+    <ul id="goalList"></ul>
+
+    <div class="progress" id="progressText">Completed: 0 / 0</div>
+  </div>
+
+  <script>
+    let goals = JSON.parse(localStorage.getItem('goals')) || [];
+
+    function renderGoals() {
+      const goalList = document.getElementById('goalList');
+      goalList.innerHTML = '';
+
+      let completedCount = 0;
+
+      goals.forEach((goal, index) => {
+        const li = document.createElement('li');
+        if (goal.completed) {
+          li.classList.add('completed');
+          completedCount++;
+        }
+
+        li.innerHTML = `
+          <span>${goal.text}</span>
+          <input type="checkbox" ${goal.completed ? 'checked' : ''} onchange="toggleGoal(${index})" />
+        `;
+        goalList.appendChild(li);
+      });
+
+      document.getElementById('progressText').innerText = `Completed: ${completedCount} / ${goals.length}`;
+      localStorage.setItem('goals', JSON.stringify(goals));
+    }
+
+    function addGoal() {
+      const input = document.getElementById('goalInput');
+      if (input.value.trim() === '') return;
+
+      goals.push({ text: input.value, completed: false });
+      input.value = '';
+      renderGoals();
+    }
+
+    function toggleGoal(index) {
+      goals[index].completed = !goals[index].completed;
+      renderGoals();
+    }
+
+    renderGoals();
+  </script>
+</body>
+</html>
