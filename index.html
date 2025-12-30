@@ -3,62 +3,35 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEET Smart Planner Pro – Mobile</title>
+  <title>NEET Smart Planner – Daily Timetable</title>
   <style>
-    body { font-family: system-ui, Arial, sans-serif; background: #f2f3f5; margin: 0; padding: 0; }
+    body { font-family: system-ui, Arial, sans-serif; background: #f2f3f5; margin: 0; }
     body.dark { background: #121212; color: #e0e0e0; }
 
-    header {
-      position: sticky; top: 0; background: #2c3e50; color: #fff;
-      padding: 15px; text-align: center; font-size: 18px;
-    }
-
+    header { position: sticky; top: 0; background: #2c3e50; color: #fff; padding: 14px; text-align: center; font-size: 18px; }
     body.dark header { background: #000; }
 
-    .container { padding: 15px; max-width: 600px; margin: auto; }
-
-    .card {
-      background: #fff; border-radius: 15px; padding: 15px; margin-bottom: 15px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.08);
-    }
-
+    .container { padding: 15px; max-width: 650px; margin: auto; }
+    .card { background: #fff; border-radius: 14px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
     body.dark .card { background: #1e1e1e; }
 
-    input, select, button {
-      width: 100%; padding: 12px; margin-top: 8px; font-size: 15px;
-      border-radius: 10px; border: 1px solid #ccc;
-    }
-
+    input, select, button { width: 100%; padding: 12px; margin-top: 8px; font-size: 15px; border-radius: 10px; border: 1px solid #ccc; }
     button { background: #3498db; color: #fff; border: none; }
-    button:active { transform: scale(0.98); }
 
-    .goal {
-      display: flex; align-items: center; justify-content: space-between;
-      padding: 10px 0; border-bottom: 1px solid #eee;
-    }
+    .slot { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+    body.dark .slot { border-color: #444; }
 
-    body.dark .goal { border-color: #444; }
-
-    .goal.completed span { text-decoration: line-through; color: #27ae60; }
+    .slot.completed span { text-decoration: line-through; color: #27ae60; }
 
     .stats { display: flex; justify-content: space-around; font-weight: bold; }
 
-    .bar { height: 14px; border-radius: 7px; background: #3498db; margin-bottom: 8px; }
-    body.dark .bar { background: #9b59b6; }
-
-    .bottom-nav {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      display: flex; justify-content: space-around;
-      background: #fff; padding: 10px 0; border-top: 1px solid #ddd;
-    }
-
+    .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; display: flex; justify-content: space-around; background: #fff; padding: 10px 0; border-top: 1px solid #ddd; }
     body.dark .bottom-nav { background: #1e1e1e; border-color: #444; }
-
     .bottom-nav button { width: auto; padding: 8px 12px; font-size: 14px; }
   </style>
 </head>
 <body>
-<header>📘 NEET Smart Planner</header>
+<header>📅 NEET Daily Timetable</header>
 
 <div class="container">
 
@@ -68,32 +41,29 @@
   </div>
 
   <div class="card">
-    <h3>Add Study Goal</h3>
-    <input id="goalText" placeholder="Chapter / Topic" />
+    <h3>Add Time Slot</h3>
+    <input id="time" placeholder="Time (e.g. 6:00 – 7:30 AM)" />
+    <input id="task" placeholder="Task (Physics Revision)" />
     <select id="subject">
       <option>Physics</option>
       <option>Chemistry</option>
       <option>Biology</option>
+      <option>Revision</option>
+      <option>Test</option>
     </select>
-    <input id="hours" type="number" placeholder="Hours" step="0.5" />
-    <button onclick="addGoal()">Add Goal</button>
+    <button onclick="addSlot()">Add Slot</button>
   </div>
 
   <div class="card">
-    <h3>Today's Goals</h3>
-    <div id="goalList"></div>
+    <h3>Today's Schedule</h3>
+    <div id="slotList"></div>
   </div>
 
   <div class="card">
     <div class="stats">
-      <div id="progress">0/0</div>
-      <div id="time">0h</div>
+      <div id="done">0 done</div>
+      <div id="total">0 total</div>
     </div>
-  </div>
-
-  <div class="card">
-    <h3>Subject-wise Hours</h3>
-    <div id="chart"></div>
   </div>
 
 </div>
@@ -105,7 +75,7 @@
 </div>
 
 <script>
-let goals = JSON.parse(localStorage.getItem('neetGoals')) || [];
+let slots = JSON.parse(localStorage.getItem('neetSlots')) || [];
 let dark = JSON.parse(localStorage.getItem('dark')) || false;
 
 if (dark) document.body.classList.add('dark');
@@ -116,60 +86,42 @@ function toggleDark() {
 }
 
 function render() {
-  const list = document.getElementById('goalList');
+  const list = document.getElementById('slotList');
   list.innerHTML = '';
-  let done = 0, total = 0;
-  let subjects = { Physics: 0, Chemistry: 0, Biology: 0 };
+  let done = 0;
 
-  goals.forEach((g, i) => {
-    if (g.completed) {
-      done++; total += Number(g.hours);
-      subjects[g.subject] += Number(g.hours);
-    }
-
+  slots.forEach((s, i) => {
+    if (s.completed) done++;
     const div = document.createElement('div');
-    div.className = 'goal' + (g.completed ? ' completed' : '');
-    div.innerHTML = `<span>[${g.subject}] ${g.text} (${g.hours}h)</span>
-      <input type="checkbox" ${g.completed ? 'checked' : ''} onchange="toggle(${i})" />`;
+    div.className = 'slot' + (s.completed ? ' completed' : '');
+    div.innerHTML = `<span>${s.time} | [${s.subject}] ${s.task}</span>
+      <input type="checkbox" ${s.completed ? 'checked' : ''} onchange="toggle(${i})" />`;
     list.appendChild(div);
   });
 
-  progress.innerText = `${done}/${goals.length} done`;
-  time.innerText = `${total}h`;
+  doneEl.innerText = `${done} done`;
+  totalEl.innerText = `${slots.length} total`;
 
-  renderChart(subjects);
-  localStorage.setItem('neetGoals', JSON.stringify(goals));
+  localStorage.setItem('neetSlots', JSON.stringify(slots));
 }
 
-function renderChart(subjects) {
-  const chart = document.getElementById('chart');
-  chart.innerHTML = '';
-  const max = Math.max(...Object.values(subjects), 1);
-  for (let s in subjects) {
-    const p = document.createElement('p');
-    p.innerText = `${s}: ${subjects[s]}h`;
-    const bar = document.createElement('div');
-    bar.className = 'bar';
-    bar.style.width = (subjects[s] / max) * 100 + '%';
-    chart.appendChild(p);
-    chart.appendChild(bar);
-  }
-}
-
-function addGoal() {
-  if (!goalText.value.trim()) return;
-  goals.push({ text: goalText.value, subject: subject.value, hours: hours.value || 0, completed: false });
-  goalText.value = ''; hours.value = '';
+function addSlot() {
+  if (!time.value || !task.value) return;
+  slots.push({ time: time.value, task: task.value, subject: subject.value, completed: false });
+  time.value = ''; task.value = '';
   render();
 }
 
-function toggle(i) { goals[i].completed = !goals[i].completed; render(); }
+function toggle(i) { slots[i].completed = !slots[i].completed; render(); }
 
 const examDate = new Date('2026-05-03');
 setInterval(() => {
   const days = Math.floor((examDate - new Date()) / (1000*60*60*24));
   countdown.innerText = days > 0 ? `⏳ ${days} days left for NEET` : '🔥 Exam Day';
 }, 1000);
+
+const doneEl = document.getElementById('done');
+const totalEl = document.getElementById('total');
 
 render();
 </script>
