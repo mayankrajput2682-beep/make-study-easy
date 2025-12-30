@@ -3,118 +3,101 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEET Daily Routine & Goal Tracker</title>
+  <title>NEET Smart Daily Planner</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f4f6f8;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      color: #2c3e50;
-    }
-    .container {
-      max-width: 800px;
-      margin: auto;
-      background: #ffffff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    .add-goal {
-      display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-    .add-goal input {
-      flex: 1;
-      padding: 10px;
-      font-size: 16px;
-    }
-    .add-goal button {
-      padding: 10px 15px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    ul {
-      list-style: none;
-      padding: 0;
-    }
-    li {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 10px;
-      border-bottom: 1px solid #ddd;
-    }
-    li.completed span {
-      text-decoration: line-through;
-      color: green;
-    }
-    .progress {
-      margin-top: 20px;
-      text-align: center;
-      font-weight: bold;
-    }
+    body { font-family: Arial, sans-serif; background: #f4f6f8; padding: 20px; }
+    h1 { text-align: center; color: #2c3e50; }
+    .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+    .row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+    input, select, button { padding: 10px; font-size: 14px; }
+    button { cursor: pointer; }
+    ul { list-style: none; padding: 0; }
+    li { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #ddd; }
+    li.completed span { text-decoration: line-through; color: green; }
+    .stats { display: flex; justify-content: space-around; margin-top: 20px; font-weight: bold; }
+    .timer { text-align: center; margin-top: 20px; }
   </style>
 </head>
 <body>
-  <h1>NEET Daily Routine & Goal Tracker</h1>
-  <div class="container">
-    <div class="add-goal">
-      <input type="text" id="goalInput" placeholder="Add your daily goal (e.g. Biology Revision)" />
-      <button onclick="addGoal()">Add</button>
-    </div>
+<h1>NEET Smart Daily Planner</h1>
+<div class="container">
 
-    <ul id="goalList"></ul>
-
-    <div class="progress" id="progressText">Completed: 0 / 0</div>
+  <!-- Add Goal -->
+  <div class="row">
+    <input id="goalText" placeholder="Study goal (e.g. Ray Optics)" />
+    <select id="subject">
+      <option>Physics</option>
+      <option>Chemistry</option>
+      <option>Biology</option>
+    </select>
+    <input id="hours" type="number" placeholder="Hours" min="0" step="0.5" />
+    <button onclick="addGoal()">Add Goal</button>
   </div>
 
-  <script>
-    let goals = JSON.parse(localStorage.getItem('goals')) || [];
+  <ul id="goalList"></ul>
 
-    function renderGoals() {
-      const goalList = document.getElementById('goalList');
-      goalList.innerHTML = '';
+  <!-- Stats -->
+  <div class="stats">
+    <div id="progress">Completed: 0/0</div>
+    <div id="time">Study Hours: 0</div>
+  </div>
 
-      let completedCount = 0;
+  <!-- Study Timer -->
+  <div class="timer">
+    <h3>Study Timer (Minutes)</h3>
+    <input id="timerInput" type="number" placeholder="25" />
+    <button onclick="startTimer()">Start</button>
+    <p id="timerDisplay"></p>
+  </div>
 
-      goals.forEach((goal, index) => {
-        const li = document.createElement('li');
-        if (goal.completed) {
-          li.classList.add('completed');
-          completedCount++;
-        }
+</div>
 
-        li.innerHTML = `
-          <span>${goal.text}</span>
-          <input type="checkbox" ${goal.completed ? 'checked' : ''} onchange="toggleGoal(${index})" />
-        `;
-        goalList.appendChild(li);
-      });
+<script>
+let goals = JSON.parse(localStorage.getItem('neetGoals')) || [];
+let timer;
 
-      document.getElementById('progressText').innerText = `Completed: ${completedCount} / ${goals.length}`;
-      localStorage.setItem('goals', JSON.stringify(goals));
-    }
+function render() {
+  const list = document.getElementById('goalList');
+  list.innerHTML = '';
+  let done = 0;
+  let hours = 0;
 
-    function addGoal() {
-      const input = document.getElementById('goalInput');
-      if (input.value.trim() === '') return;
+  goals.forEach((g, i) => {
+    if (g.completed) { done++; hours += Number(g.hours); }
+    const li = document.createElement('li');
+    if (g.completed) li.classList.add('completed');
+    li.innerHTML = `<span>[${g.subject}] ${g.text} (${g.hours}h)</span>
+      <input type="checkbox" ${g.completed ? 'checked' : ''} onchange="toggle(${i})" />`;
+    list.appendChild(li);
+  });
 
-      goals.push({ text: input.value, completed: false });
-      input.value = '';
-      renderGoals();
-    }
+  document.getElementById('progress').innerText = `Completed: ${done}/${goals.length}`;
+  document.getElementById('time').innerText = `Study Hours: ${hours}`;
+  localStorage.setItem('neetGoals', JSON.stringify(goals));
+}
 
-    function toggleGoal(index) {
-      goals[index].completed = !goals[index].completed;
-      renderGoals();
-    }
+function addGoal() {
+  const text = goalText.value.trim();
+  if (!text) return;
+  goals.push({ text, subject: subject.value, hours: hours.value || 0, completed: false });
+  goalText.value = ''; hours.value = '';
+  render();
+}
 
-    renderGoals();
-  </script>
+function toggle(i) { goals[i].completed = !goals[i].completed; render(); }
+
+function startTimer() {
+  clearInterval(timer);
+  let t = (timerInput.value || 25) * 60;
+  timer = setInterval(() => {
+    let m = Math.floor(t / 60);
+    let s = t % 60;
+    timerDisplay.innerText = `${m}:${s < 10 ? '0' : ''}${s}`;
+    if (t-- <= 0) clearInterval(timer);
+  }, 1000);
+}
+
+render();
+</script>
 </body>
 </html>
