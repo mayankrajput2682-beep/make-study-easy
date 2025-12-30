@@ -3,34 +3,45 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NEET Smart Daily Planner</title>
+  <title>NEET Smart Planner Pro</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f6f8; padding: 20px; }
-    h1 { text-align: center; color: #2c3e50; }
-    .container { max-width: 900px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    .row { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+    body { font-family: Arial, sans-serif; background: #f4f6f8; padding: 20px; transition: 0.3s; }
+    body.dark { background: #121212; color: #e0e0e0; }
+    h1 { text-align: center; }
+    .container { max-width: 1000px; margin: auto; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 0 10px rgba(0,0,0,0.1); transition: 0.3s; }
+    body.dark .container { background: #1e1e1e; }
+    .row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px; }
     input, select, button { padding: 10px; font-size: 14px; }
     button { cursor: pointer; }
     ul { list-style: none; padding: 0; }
-    li { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #ddd; }
-    li.completed span { text-decoration: line-through; color: green; }
-    .stats { display: flex; justify-content: space-around; margin-top: 20px; font-weight: bold; }
-    .timer { text-align: center; margin-top: 20px; }
+    li { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #ccc; }
+    body.dark li { border-color: #444; }
+    li.completed span { text-decoration: line-through; color: #2ecc71; }
+    .stats, .top { display: flex; justify-content: space-around; margin: 15px 0; font-weight: bold; flex-wrap: wrap; }
+    .timer, .countdown { text-align: center; margin-top: 20px; }
+    .toggle { text-align: right; }
   </style>
 </head>
 <body>
-<h1>NEET Smart Daily Planner</h1>
+<h1>NEET Smart Planner Pro</h1>
+<div class="toggle"><button onclick="toggleDark()">🌙 Toggle Dark Mode</button></div>
 <div class="container">
+
+  <!-- Countdown -->
+  <div class="countdown">
+    <h3>NEET Exam Countdown</h3>
+    <p id="countdown"></p>
+  </div>
 
   <!-- Add Goal -->
   <div class="row">
-    <input id="goalText" placeholder="Study goal (e.g. Ray Optics)" />
+    <input id="goalText" placeholder="Study goal (e.g. Electrochemistry)" />
     <select id="subject">
       <option>Physics</option>
       <option>Chemistry</option>
       <option>Biology</option>
     </select>
-    <input id="hours" type="number" placeholder="Hours" min="0" step="0.5" />
+    <input id="hours" type="number" placeholder="Hours" step="0.5" />
     <button onclick="addGoal()">Add Goal</button>
   </div>
 
@@ -44,7 +55,7 @@
 
   <!-- Study Timer -->
   <div class="timer">
-    <h3>Study Timer (Minutes)</h3>
+    <h3>Study Timer (Pomodoro)</h3>
     <input id="timerInput" type="number" placeholder="25" />
     <button onclick="startTimer()">Start</button>
     <p id="timerDisplay"></p>
@@ -54,13 +65,20 @@
 
 <script>
 let goals = JSON.parse(localStorage.getItem('neetGoals')) || [];
+let dark = JSON.parse(localStorage.getItem('dark')) || false;
 let timer;
+
+if (dark) document.body.classList.add('dark');
+
+function toggleDark() {
+  document.body.classList.toggle('dark');
+  localStorage.setItem('dark', document.body.classList.contains('dark'));
+}
 
 function render() {
   const list = document.getElementById('goalList');
   list.innerHTML = '';
-  let done = 0;
-  let hours = 0;
+  let done = 0, hours = 0;
 
   goals.forEach((g, i) => {
     if (g.completed) { done++; hours += Number(g.hours); }
@@ -71,15 +89,14 @@ function render() {
     list.appendChild(li);
   });
 
-  document.getElementById('progress').innerText = `Completed: ${done}/${goals.length}`;
-  document.getElementById('time').innerText = `Study Hours: ${hours}`;
+  progress.innerText = `Completed: ${done}/${goals.length}`;
+  time.innerText = `Study Hours: ${hours}`;
   localStorage.setItem('neetGoals', JSON.stringify(goals));
 }
 
 function addGoal() {
-  const text = goalText.value.trim();
-  if (!text) return;
-  goals.push({ text, subject: subject.value, hours: hours.value || 0, completed: false });
+  if (!goalText.value.trim()) return;
+  goals.push({ text: goalText.value, subject: subject.value, hours: hours.value || 0, completed: false });
   goalText.value = ''; hours.value = '';
   render();
 }
@@ -96,6 +113,15 @@ function startTimer() {
     if (t-- <= 0) clearInterval(timer);
   }, 1000);
 }
+
+// Countdown (set NEET exam date here)
+const examDate = new Date('2026-05-03');
+setInterval(() => {
+  const now = new Date();
+  const diff = examDate - now;
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  countdown.innerText = days > 0 ? `${days} days left for NEET` : 'Exam Day!';
+}, 1000);
 
 render();
 </script>
