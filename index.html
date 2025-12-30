@@ -17,9 +17,15 @@
     li { display: flex; justify-content: space-between; align-items: center; padding: 8px; border-bottom: 1px solid #ccc; }
     body.dark li { border-color: #444; }
     li.completed span { text-decoration: line-through; color: #2ecc71; }
-    .stats, .top { display: flex; justify-content: space-around; margin: 15px 0; font-weight: bold; flex-wrap: wrap; }
-    .timer, .countdown { text-align: center; margin-top: 20px; }
+    .stats { display: flex; justify-content: space-around; margin: 15px 0; font-weight: bold; flex-wrap: wrap; }
+    .timer, .countdown, .chart { text-align: center; margin-top: 25px; }
     .toggle { text-align: right; }
+
+    /* Chart */
+    .bar-container { max-width: 500px; margin: auto; text-align: left; }
+    .bar-label { margin: 8px 0 3px; font-weight: bold; }
+    .bar { height: 20px; background: #3498db; border-radius: 5px; }
+    body.dark .bar { background: #9b59b6; }
   </style>
 </head>
 <body>
@@ -53,6 +59,12 @@
     <div id="time">Study Hours: 0</div>
   </div>
 
+  <!-- Subject-wise Chart -->
+  <div class="chart">
+    <h3>Subject-wise Study Hours</h3>
+    <div class="bar-container" id="chart"></div>
+  </div>
+
   <!-- Study Timer -->
   <div class="timer">
     <h3>Study Timer (Pomodoro)</h3>
@@ -78,10 +90,15 @@ function toggleDark() {
 function render() {
   const list = document.getElementById('goalList');
   list.innerHTML = '';
-  let done = 0, hours = 0;
+  let done = 0, totalHours = 0;
+  let subjects = { Physics: 0, Chemistry: 0, Biology: 0 };
 
   goals.forEach((g, i) => {
-    if (g.completed) { done++; hours += Number(g.hours); }
+    if (g.completed) {
+      done++;
+      totalHours += Number(g.hours);
+      subjects[g.subject] += Number(g.hours);
+    }
     const li = document.createElement('li');
     if (g.completed) li.classList.add('completed');
     li.innerHTML = `<span>[${g.subject}] ${g.text} (${g.hours}h)</span>
@@ -90,8 +107,29 @@ function render() {
   });
 
   progress.innerText = `Completed: ${done}/${goals.length}`;
-  time.innerText = `Study Hours: ${hours}`;
+  time.innerText = `Study Hours: ${totalHours}`;
   localStorage.setItem('neetGoals', JSON.stringify(goals));
+
+  renderChart(subjects);
+}
+
+function renderChart(subjects) {
+  const chart = document.getElementById('chart');
+  chart.innerHTML = '';
+  const max = Math.max(...Object.values(subjects), 1);
+
+  for (let sub in subjects) {
+    const label = document.createElement('div');
+    label.className = 'bar-label';
+    label.innerText = `${sub} – ${subjects[sub]}h`;
+
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    bar.style.width = (subjects[sub] / max) * 100 + '%';
+
+    chart.appendChild(label);
+    chart.appendChild(bar);
+  }
 }
 
 function addGoal() {
@@ -114,7 +152,7 @@ function startTimer() {
   }, 1000);
 }
 
-// Countdown (set NEET exam date here)
+// Countdown
 const examDate = new Date('2026-05-03');
 setInterval(() => {
   const now = new Date();
